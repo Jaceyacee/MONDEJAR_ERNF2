@@ -1,5 +1,6 @@
+import * as Battery from 'expo-battery';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
@@ -9,7 +10,21 @@ import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
 
 export default function HomeScreen() {
+  // Smart Counter states
   const [count, setCount] = useState(0);
+  const maxLimit = 10;
+
+  // Battery state
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+
+  useEffect(() => {
+    const getBattery = async () => {
+      const level = await Battery.getBatteryLevelAsync();
+      setBatteryLevel(level);
+    };
+
+    getBattery();
+  }, []);
 
   return (
     <ParallaxScrollView
@@ -19,12 +34,22 @@ export default function HomeScreen() {
           source={require('@/assets/images/partial-react-logo.png')}
           style={styles.reactLogo}
         />
-      }>
-
+      }
+    >
       {/* Title */}
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
+      </ThemedView>
+
+      {/* Battery Feature */}
+      <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Battery Status</ThemedText>
+        <ThemedText>
+          {batteryLevel !== null
+            ? `Battery Level: ${(batteryLevel * 100).toFixed(0)}%`
+            : 'Loading battery level...'}
+        </ThemedText>
       </ThemedView>
 
       {/* Step 1 */}
@@ -35,25 +60,40 @@ export default function HomeScreen() {
         </ThemedText>
       </ThemedView>
 
-      {/* My Feature: Counter */}
+      {/* Smart Counter Feature */}
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">My Counter Feature</ThemedText>
+        <ThemedText type="subtitle">Smart Counter Feature</ThemedText>
 
         <ThemedText>Count: {count}</ThemedText>
+        <ThemedText>Max Limit: {maxLimit}</ThemedText>
 
         <Button
           title="Increase"
-          onPress={() => setCount(count + 1)}
+          onPress={() => {
+            if (count < maxLimit) setCount(count + 1);
+          }}
         />
+
+        <Button
+          title="Decrease"
+          onPress={() => {
+            if (count > 0) setCount(count - 1);
+          }}
+        />
+
+        <Button title="Reset" onPress={() => setCount(0)} />
+
+        {count === maxLimit && (
+          <ThemedText style={{ color: 'red' }}>
+            Limit reached!
+          </ThemedText>
+        )}
       </ThemedView>
 
       {/* Step 2 */}
       <ThemedView style={styles.stepContainer}>
         <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
+          <ThemedText type="subtitle">Step 2: Explore</ThemedText>
         </Link>
 
         <ThemedText>
@@ -68,7 +108,6 @@ export default function HomeScreen() {
           Run <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> when ready.
         </ThemedText>
       </ThemedView>
-
     </ParallaxScrollView>
   );
 }
